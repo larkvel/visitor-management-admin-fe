@@ -1,7 +1,7 @@
 import React from "react";
 import { Building2, CheckCircle2, Edit3, DoorOpen, Shield, Users } from "lucide-react";
-import Metric from "../Metric";
-import StatusBadge from "../StatusBadge";
+import Metric from "./Metric";
+import StatusBadge from "./StatusBadge";
 
 export default function AdminDashboard({ companies, dashboard, editingCompanyId, form, onChange, onEdit, onSubmit }) {
   return (
