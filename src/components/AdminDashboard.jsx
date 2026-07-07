@@ -1,9 +1,9 @@
 import React from "react";
-import { Building2, CheckCircle2, Edit3, DoorOpen, Shield, Users } from "lucide-react";
+import { Building2, CheckCircle2, Clock, Edit3, DoorOpen, Shield, Users } from "lucide-react";
 import Metric from "./Metric";
 import StatusBadge from "./StatusBadge";
 
-export default function AdminDashboard({ companies, dashboard, editingCompanyId, form, onChange, onEdit, onSubmit }) {
+export default function AdminDashboard({ companies, pendingCompanies = [], dashboard, editingCompanyId, form, onChange, onEdit, onSubmit, onApprove }) {
   return (
     <>
       <section className="metrics" aria-label="Platform metrics">
@@ -12,6 +12,40 @@ export default function AdminDashboard({ companies, dashboard, editingCompanyId,
         <Metric icon={<Users />} label="Users" value={dashboard.company_users} />
         <Metric icon={<DoorOpen />} label="Visits" value={dashboard.visits} />
       </section>
+
+      {pendingCompanies.length > 0 && (
+        <section style={{ margin: "0 0 24px" }}>
+          <div className="panel">
+            <div className="panelHeader" style={{ marginBottom: "16px" }}>
+              <Clock size={20} color="#f59e0b" />
+              <h2>Pending Approvals ({pendingCompanies.length})</h2>
+            </div>
+            <div className="visitList">
+              {pendingCompanies.map(company => (
+                <article className="accountRow" key={company.id}>
+                  <div>
+                    <strong>{company.name}</strong>
+                    <span>{company.industry || "No industry"} &middot; {company.subscription_plan}</span>
+                    <small>{company.contact_name} &middot; {company.billing_email}</small>
+                    <small style={{ color: "#9ca3af" }}>Subdomain: {company.subdomain}.larkvel.com</small>
+                  </div>
+                  <StatusBadge status={company.account_status} />
+                  <div className="actions">
+                    <button
+                      type="button"
+                      onClick={() => onApprove(company.id)}
+                      style={{ padding: "6px 16px", background: "#22c55e", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}
+                    >
+                      Approve
+                    </button>
+                  </div>
+                  <small style={{ color: "#9ca3af" }}>Registered {new Date(company.created_at).toLocaleDateString()}</small>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="workspace">
         <form className="panel" onSubmit={onSubmit}>
@@ -34,6 +68,7 @@ export default function AdminDashboard({ companies, dashboard, editingCompanyId,
             </label>
             <label className="wide">Status
               <select name="accountStatus" value={form.accountStatus} onChange={onChange}>
+                <option value="pending">Pending</option>
                 <option value="trial">Trial</option>
                 <option value="active">Active</option>
                 <option value="suspended">Suspended</option>
@@ -53,12 +88,13 @@ export default function AdminDashboard({ companies, dashboard, editingCompanyId,
             <h2>Customer Accounts</h2>
           </div>
           <div className="visitList">
-            {companies.map((company) => (
+            {companies.filter(c => c.account_status !== 'pending').map((company) => (
               <article className="accountRow" key={company.id}>
                 <div>
                   <strong>{company.name}</strong>
-                  <span>{company.industry || "No industry"} · {company.subscription_plan}</span>
-                  <small>{company.contact_name || "No contact"} · {company.billing_email || "No billing email"}</small>
+                  <span>{company.industry || "No industry"} &middot; {company.subscription_plan}</span>
+                  <small>{company.contact_name || "No contact"} &middot; {company.billing_email || "No billing email"}</small>
+                  {company.subdomain && <small style={{ color: "#6366f1" }}>{company.subdomain}.larkvel.com</small>}
                 </div>
                 <StatusBadge status={company.account_status} />
                 <div className="actions">
