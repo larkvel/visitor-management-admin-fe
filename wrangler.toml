@@ -1,0 +1,12 @@
+name = "visitor-management-admin-fe"
+type = "javascript"
+main = "dist"
+
+[env.production]
+routes = [
+  { pattern = "admin.larkvel.com/*", zone_name = "larkvel.com" }
+]
+
+[build]
+command = "npm run build"
+cwd = "."
