@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Shield } from "lucide-react";
+import { Building2, Shield } from "lucide-react";
 import { api } from "./api";
 import AdminDashboard from "./components/AdminDashboard";
 import Login from "./components/Login";
@@ -18,6 +18,8 @@ function AdminApp({ session, onLogout }) {
   const [companyForm, setCompanyForm] = useState(emptyCompany);
   const [editingCompanyId, setEditingCompanyId] = useState("");
   const [approvedCredentials, setApprovedCredentials] = useState(null);
+  const [approvingId, setApprovingId] = useState(null);
+  const [filter, setFilter] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -59,6 +61,7 @@ function AdminApp({ session, onLogout }) {
   }
 
   function startCompanyEdit(company) {
+    if (!company) { setEditingCompanyId(""); setCompanyForm(emptyCompany); return; }
     setEditingCompanyId(company.id);
     setCompanyForm({
       name: company.name || "", industry: company.industry || "",
@@ -69,56 +72,117 @@ function AdminApp({ session, onLogout }) {
   }
 
   async function approveCompany(companyId) {
-    setError("");
+    setError(""); setApprovingId(companyId);
     try {
       const result = await api.approveCompany(companyId);
       setApprovedCredentials(result.adminCredentials);
       await loadPlatform();
     } catch (e) { setError(e.message); }
+    finally { setApprovingId(null); }
   }
 
-  if (loading) return <main className="page"><div className="loading">Loading admin dashboard...</div></main>;
+  const initials = session.user?.fullName
+    ? session.user.fullName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()
+    : "AD";
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner" />
+        <p>Loading admin dashboard…</p>
+      </div>
+    );
+  }
 
   return (
-    <main className="page">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Visitor Management</p>
-          <h1>Platform Admin</h1>
+    <div className="app-layout">
+      {/* ── Sidebar ── */}
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-label">Visitor Management</div>
+          <h1><span className="brand-dot" />Platform Admin</h1>
         </div>
-        <div className="toolbar">
-          <span style={{ color: "#666", fontSize: "14px" }}>🔒 {session.user.fullName}</span>
-          <button onClick={onLogout} style={{ marginLeft: "12px", padding: "6px 14px", border: "1px solid #ddd", borderRadius: "4px", background: "white", cursor: "pointer", fontSize: "14px" }}>Logout</button>
-        </div>
-      </header>
-
-      {error && <div className="alert">{error}</div>}
-
-      {approvedCredentials && (
-        <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", padding: "20px 24px", margin: "0 0 24px" }}>
-          <strong style={{ color: "#166534" }}>✅ Company Approved! Share these credentials with the company admin:</strong>
-          <div style={{ marginTop: "12px", fontFamily: "monospace", fontSize: "14px", background: "white", padding: "12px", borderRadius: "6px", border: "1px solid #d1fae5" }}>
-            <div>Username: <strong>{approvedCredentials.username}</strong></div>
-            <div>Password: <strong>{approvedCredentials.password}</strong></div>
-            <div>Login URL: <a href={approvedCredentials.loginUrl} target="_blank" rel="noreferrer">{approvedCredentials.loginUrl}</a></div>
+        <nav className="sidebar-nav">
+          <button
+            className={`nav-item ${filter === null ? "active" : ""}`}
+            onClick={() => setFilter(null)}
+          >
+            <Shield size={16} /> Overview
+          </button>
+          <button
+            className={`nav-item ${filter === "pending" ? "active" : ""}`}
+            onClick={() => setFilter("pending")}
+          >
+            <Building2 size={16} /> Pending
+            {pendingCompanies.length > 0 && (
+              <span className="nav-badge">{pendingCompanies.length}</span>
+            )}
+          </button>
+          <button
+            className={`nav-item ${filter === "active" ? "active" : ""}`}
+            onClick={() => setFilter("active")}
+          >
+            <Building2 size={16} /> Active
+          </button>
+          <button
+            className={`nav-item ${filter === "suspended" ? "active" : ""}`}
+            onClick={() => setFilter("suspended")}
+          >
+            <Building2 size={16} /> Suspended
+          </button>
+        </nav>
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <div className="user-avatar">{initials}</div>
+            <div>
+              <div className="user-name">{session.user?.fullName || "Admin"}</div>
+              <div className="user-role">Platform Admin</div>
+            </div>
           </div>
-          <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#6b7280" }}>⚠️ This password is shown only once. Save it before closing!</p>
-          <button onClick={() => setApprovedCredentials(null)} style={{ marginTop: "12px", padding: "6px 14px", cursor: "pointer", borderRadius: "4px", border: "1px solid #86efac" }}>Dismiss</button>
+          <button className="logout-btn" onClick={onLogout}>Sign out</button>
         </div>
-      )}
+      </aside>
 
-      <AdminDashboard
-        companies={companies}
-        pendingCompanies={pendingCompanies}
-        dashboard={platformDashboard}
-        editingCompanyId={editingCompanyId}
-        form={companyForm}
-        onChange={updateCompanyForm}
-        onEdit={startCompanyEdit}
-        onSubmit={submitCompany}
-        onApprove={approveCompany}
-      />
-    </main>
+      {/* ── Main ── */}
+      <div className="main-content">
+        <div className="topbar">
+          <div>
+            <div className="topbar-title">
+              {filter
+                ? `${filter.charAt(0).toUpperCase() + filter.slice(1)} Companies`
+                : "Dashboard Overview"}
+            </div>
+            <div className="topbar-sub">
+              {companies.length} total companies · {pendingCompanies.length} pending approval
+            </div>
+          </div>
+          <div className="topbar-actions">
+            <button className="refresh-btn" onClick={loadPlatform}>↻ Refresh</button>
+          </div>
+        </div>
+
+        <div className="page-body">
+          {error && <div className="alert">{error}</div>}
+
+          <AdminDashboard
+            companies={companies}
+            pendingCompanies={pendingCompanies}
+            dashboard={platformDashboard}
+            editingCompanyId={editingCompanyId}
+            form={companyForm}
+            onChange={updateCompanyForm}
+            onEdit={startCompanyEdit}
+            onSubmit={submitCompany}
+            onApprove={approveCompany}
+            approvedCredentials={approvedCredentials}
+            onDismissCredentials={() => setApprovedCredentials(null)}
+            approvingId={approvingId}
+            filter={filter}
+            onFilterChange={setFilter}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 
