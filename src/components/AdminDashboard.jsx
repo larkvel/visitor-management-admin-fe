@@ -109,6 +109,8 @@ function CompanyRow({ company, onEdit }) {
         <div className="row-detail">
           <DetailField label="Billing Email" value={company.billing_email} />
           <DetailField label="Contact Phone" value={company.contact_phone} />
+          <DetailField label="Attendance Module" value={company.attendance_enabled ? "Enabled" : "Disabled"} />
+          <DetailField label="Payroll Module" value={company.payroll_enabled ? "Enabled" : "Disabled"} />
           <DetailField label="Registered On" value={new Date(company.created_at).toLocaleString("en-IN")} />
           <DetailField label="Users" value={company.user_count != null ? `${company.user_count} users` : null} />
           <DetailField label="Visits" value={company.visit_count != null ? `${company.visit_count} visits` : null} />
@@ -157,7 +159,7 @@ function EditCompanyForm({ form, editingCompanyId, onChange, onSubmit, onCancel 
               <option value="enterprise">Enterprise</option>
             </select>
           </div>
-          <div className="form-field wide">
+          <div className="form-field">
             <label>Status</label>
             <select name="accountStatus" value={form.accountStatus} onChange={onChange}>
               <option value="pending">Pending</option>
@@ -165,6 +167,28 @@ function EditCompanyForm({ form, editingCompanyId, onChange, onSubmit, onCancel 
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
               <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <label>Attendance Module</label>
+            <select 
+              name="attendanceEnabled" 
+              value={form.attendanceEnabled ? "true" : "false"} 
+              onChange={e => onChange({ target: { name: "attendanceEnabled", value: e.target.value === "true" } })}
+            >
+              <option value="false">Disabled</option>
+              <option value="true">Enabled</option>
+            </select>
+          </div>
+          <div className="form-field wide">
+            <label>Payroll Module</label>
+            <select 
+              name="payrollEnabled" 
+              value={form.payrollEnabled ? "true" : "false"} 
+              onChange={e => onChange({ target: { name: "payrollEnabled", value: e.target.value === "true" } })}
+            >
+              <option value="false">Disabled</option>
+              <option value="true">Enabled</option>
             </select>
           </div>
         </div>

@@ -8,7 +8,8 @@ import "./styles.css";
 
 const emptyCompany = {
   name: "", industry: "", billingEmail: "", contactName: "", contactPhone: "",
-  subscriptionPlan: "starter", accountStatus: "trial"
+  subscriptionPlan: "starter", accountStatus: "trial",
+  attendanceEnabled: false, payrollEnabled: false
 };
 
 function AdminApp({ session, onLogout }) {
@@ -67,7 +68,9 @@ function AdminApp({ session, onLogout }) {
       name: company.name || "", industry: company.industry || "",
       billingEmail: company.billing_email || "", contactName: company.contact_name || "",
       contactPhone: company.contact_phone || "", subscriptionPlan: company.subscription_plan || "starter",
-      accountStatus: company.account_status || "trial"
+      accountStatus: company.account_status || "trial",
+      attendanceEnabled: company.attendance_enabled || false,
+      payrollEnabled: company.payroll_enabled || false
     });
   }
 
